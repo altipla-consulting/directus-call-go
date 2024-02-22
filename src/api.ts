@@ -6,7 +6,7 @@ type Options = {
 }
 
 export default defineOperationApi<Options>({
-  id: 'custom',
+  id: 'altipla-go-call',
   handler: ({ fnname }) => {
     console.log({ fnname })
   },
