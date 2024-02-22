@@ -15,8 +15,9 @@ services:
       STORAGE_LOCAL_ROOT: ./uploads
       WEBSOCKETS_ENABLED: 'true'
       TELEMETRY: 'false'
-      PUBLIC_URL: http://localhost:8055
+      PUBLIC_URL: http://go/:8055
       EXTENSIONS_AUTO_RELOAD: true
+      ALTIPLA_GO_CALL_TOKEN: local-token
     volumes:
     - .:/directus/extensions/directus-extension-call-go
     env_file:

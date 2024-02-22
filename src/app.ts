@@ -24,5 +24,20 @@ export default defineOperationApp({
         interface: 'input',
       },
     },
+    {
+      field: 'payload',
+      name: 'Payload',
+      type: 'json',
+      meta: {
+        width: 'full',
+        interface: 'input-code',
+        options: {
+          language: 'json',
+        },
+      },
+      schema: {
+        default_value: '{}',
+      },
+    },
   ],
 })
