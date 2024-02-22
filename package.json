@@ -26,12 +26,14 @@
 		"dev": "directus-extension build -w --no-minify",
 		"link": "directus-extension link",
 		"lint": "eslint --ext .ts,.tsx src",
-		"fix": "eslint --fix --ext .ts,.tsx src"
+		"fix": "eslint --fix --ext .ts,.tsx src",
+		"data": "reset-db-mysql"
 	},
 	"devDependencies": {
 		"@altipla/eslint-config-ts": "^0.9.0",
 		"@directus/extensions-sdk": "10.3.3",
 		"@types/node": "^20.11.19",
+		"reset-db-mysql": "^0.1.0",
 		"rollup": "^4.12.0",
 		"typescript": "^5.3.3",
 		"vue": "^3.4.19"
