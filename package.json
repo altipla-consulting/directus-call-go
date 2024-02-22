@@ -2,12 +2,26 @@
 	"name": "@altipla/directus-extension-call-go",
 	"description": "Directus extension to call a Go function inside an internal app directly from a flow.",
 	"icon": "extension",
-	"version": "1.0.0",
+	"version": "0.0.0",
 	"keywords": [
 		"directus",
 		"directus-extension",
 		"directus-custom-operation"
 	],
+	"publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/altipla-consulting/directus-call-go.git"
+  },
+  "author": "Altipla Consulting",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/altipla-consulting/directus-call-go/issues"
+  },
+  "homepage": "https://github.com/altipla-consulting/directus-call-go#readme",
+	"main": "dist/app.js",
 	"type": "module",
 	"directus:extension": {
 		"type": "operation",
