@@ -1,0 +1,47 @@
+
+on: 
+  release:
+    types: [ created ]
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get the version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: '8'
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        cache: 'pnpm'
+
+    - name: Configure private packages
+      uses: altipla-consulting/setup-private-npm.actions@v0
+      with:
+        npm-token: ${{ secrets.NPM_TOKEN }}
+
+    - name: Install deps
+      run: pnpm install
+
+    - name: Lint
+      run: make lint
+
+    - name: Build package
+      run: pnpm run build
+
+    - name: Set version in code
+      run: pnpm version ${{ steps.version.outputs.VERSION }}
+
+    - name: Publish to NPM
+      run: pnpm publish --no-git-checks

@@ -1,0 +1,39 @@
+{
+	"name": "@altipla/directus-extension-call-go",
+	"description": "Directus extension to call a Go function inside an internal app directly from a flow.",
+	"icon": "extension",
+	"version": "1.0.0",
+	"keywords": [
+		"directus",
+		"directus-extension",
+		"directus-custom-operation"
+	],
+	"type": "module",
+	"directus:extension": {
+		"type": "operation",
+		"path": {
+			"app": "dist/app.js",
+			"api": "dist/api.js"
+		},
+		"source": {
+			"app": "src/app.ts",
+			"api": "src/api.ts"
+		},
+		"host": "^10.3.3"
+	},
+	"scripts": {
+		"build": "directus-extension build",
+		"dev": "directus-extension build -w --no-minify",
+		"link": "directus-extension link",
+		"lint": "eslint --ext .ts,.tsx src",
+		"fix": "eslint --fix --ext .ts,.tsx src"
+	},
+	"devDependencies": {
+		"@altipla/eslint-config-ts": "^0.9.0",
+		"@directus/extensions-sdk": "10.3.3",
+		"@types/node": "^20.11.19",
+		"rollup": "^4.12.0",
+		"typescript": "^5.3.3",
+		"vue": "^3.4.19"
+	}
+}
