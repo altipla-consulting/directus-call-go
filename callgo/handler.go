@@ -123,6 +123,8 @@ func callHandler(cnf serveOpts) http.HandlerFunc {
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, accountabilityKey, ir.Accountability)
 		ctx = context.WithValue(ctx, rawTriggerKey, ir.Trigger)
+		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
 
 		args := []reflect.Value{
 			reflect.ValueOf(ctx),
