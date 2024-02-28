@@ -7,20 +7,20 @@ import (
 )
 
 var (
-	funcs = make(map[string]*Function)
+	funcs = make(map[string]*handlerFunc)
 
 	// precomputed types
 	errorType      = reflect.TypeOf((*error)(nil)).Elem()
 	stdContextType = reflect.TypeOf((*context.Context)(nil)).Elem()
 )
 
-type Function struct {
+type handlerFunc struct {
 	fv  reflect.Value // Kind() == reflect.Func
 	key string
 }
 
-func Func(key string, i any) *Function {
-	f := &Function{
+func Handle(key string, i any) *handlerFunc {
+	f := &handlerFunc{
 		key: key,
 		fv:  reflect.ValueOf(i),
 	}
@@ -51,7 +51,7 @@ func Func(key string, i any) *Function {
 	}
 
 	if old := funcs[f.key]; old != nil {
-		panic(fmt.Sprintf("callgo: multiple functions registered for task %q", key))
+		panic(fmt.Sprintf("callgo: multiple handlers registered for task %q", key))
 	}
 	funcs[f.key] = f
 
