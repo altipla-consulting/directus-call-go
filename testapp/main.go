@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"net/http"
-	"os"
 
 	"github.com/altipla-consulting/directus-call-go/callgo"
 )
@@ -40,11 +38,5 @@ var errorFn = callgo.Func("Error", func(ctx context.Context) error {
 })
 
 func main() {
-	callgo.Register(callgo.WithLogger(slog.Default()))
-
-	slog.Info("Test server listening on :8080")
-	if err := http.ListenAndServe("0.0.0.0:8080", nil); err != nil {
-		slog.Error("Cannot start server", "error", err)
-		os.Exit(1)
-	}
+	callgo.Serve(callgo.WithLogger(slog.Default()))
 }
