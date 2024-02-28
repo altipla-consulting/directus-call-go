@@ -14,27 +14,27 @@ type fooExample struct {
 }
 
 func main() {
-	callgo.Handle("NoParamsNoReturn", func(ctx context.Context) error {
+	callgo.Handle("test.no-params-no-return", func(ctx context.Context) error {
 		fmt.Println("NoParamsNoReturn called")
 		return nil
 	})
 
-	callgo.Handle("NoParamsWithReturn", func(ctx context.Context) (string, error) {
+	callgo.Handle("test.no-params-with-return", func(ctx context.Context) (string, error) {
 		return "foo-value", nil
 	})
 
-	callgo.Handle("ParamWithReturn", func(ctx context.Context, foo *fooExample) (*fooExample, error) {
+	callgo.Handle("test.param-with-return", func(ctx context.Context, foo *fooExample) (*fooExample, error) {
 		foo.Foo += "new-foo-value"
 		foo.Bar = 42
 		return foo, nil
 	})
 
-	callgo.Handle("Accountability", func(ctx context.Context) error {
+	callgo.Handle("test.accountability", func(ctx context.Context) error {
 		fmt.Printf("%#v\n", callgo.AccountabilityFromContext(ctx))
 		return nil
 	})
 
-	callgo.Handle("Error", func(ctx context.Context) error {
+	callgo.Handle("test.error", func(ctx context.Context) error {
 		return fmt.Errorf("error message")
 	})
 
