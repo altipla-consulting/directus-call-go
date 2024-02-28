@@ -51,6 +51,11 @@ type invokeRequest struct {
 
 func callHandler(cnf registerOptions) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+			return
+		}
+
 		if cnf.securityToken != "" {
 			if r.Header.Get("Authorization") != "Bearer "+cnf.securityToken {
 				http.Error(w, "wrong authorization token", http.StatusUnauthorized)
