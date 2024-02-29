@@ -16,13 +16,6 @@ class CallError extends Error {
 export default defineOperationApi<Options>({
   id: 'altipla-go-call',
   async handler({ fnname, payload }, { env, logger, data, accountability }) {
-    logger.info({
-      msg: 'Call Go function',
-      fnname,
-    })
-
-    env.ALTIPLA_CALL_GO_URL = 'http://172.21.217.31:8080'
-
     let server = env.ALTIPLA_CALL_GO_URL
     if (!server) {
       logger.error('The ALTIPLA_CALL_GO_URL environment variable is not set')
@@ -31,6 +24,12 @@ export default defineOperationApi<Options>({
     if (server.endsWith('/')) {
       server = server.slice(0, -1)
     }
+    
+    logger.info({
+      msg: 'Call Go function',
+      fnname,
+      server,
+    })
 
     let reply
     try {
