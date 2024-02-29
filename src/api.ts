@@ -24,20 +24,28 @@ export default defineOperationApi<Options>({
     if (server.endsWith('/')) {
       server = server.slice(0, -1)
     }
+
+    let headers: Record<string, string> = {
+      'Content-Type': 'application/json; charset=utf-8',
+    }
+    let withAuthorization = false
+    if (env.ALTIPLA_CALL_GO_TOKEN) {
+      headers.Authorization = `Bearer ${env.ALTIPLA_CALL_GO_TOKEN}`
+      withAuthorization = true
+    }
     
     logger.info({
       msg: 'Call Go function',
       fnname,
       server,
+      withAuthorization,
     })
 
     let reply
     try {
       reply = await fetch(`${server}/__callgo`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-        },
+        headers,
         body: JSON.stringify({
           fnname,
           accountability,
