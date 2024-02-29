@@ -32,18 +32,6 @@ export default defineOperationApi<Options>({
       server = server.slice(0, -1)
     }
 
-    let parsedPayload
-    try {
-      parsedPayload = JSON.parse(payload)
-    } catch (error) {
-      logger.error({
-        msg: 'The payload is not valid JSON',
-        fnname,
-        error,
-      })
-      throw error
-    }
-
     let reply
     try {
       reply = await fetch(`${server}/__callgo`, {
@@ -55,7 +43,7 @@ export default defineOperationApi<Options>({
           fnname,
           accountability,
           trigger: data.$trigger,
-          payload: parsedPayload,
+          payload,
         }),
       })
     } catch (error) {
