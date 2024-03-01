@@ -106,8 +106,15 @@ func callHandler(cnf serveOpts) http.HandlerFunc {
 			}
 		}
 
+		in, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("cannot read request body: %s", err), http.StatusInternalServerError)
+			return
+		}
+		cnf.logger.DebugContext(r.Context(), "JSON Request", slog.String("body", string(in)))
+
 		var ir invokeRequest
-		if err := json.NewDecoder(r.Body).Decode(&ir); err != nil {
+		if err := json.Unmarshal(in, &ir); err != nil {
 			http.Error(w, "invalid request", http.StatusBadRequest)
 			return
 		}
@@ -158,11 +165,15 @@ func callHandler(cnf serveOpts) http.HandlerFunc {
 				return
 			}
 
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			if err := json.NewEncoder(w).Encode(out[0].Interface()); err != nil {
+			out, err := json.Marshal(out[0].Interface())
+			if err != nil {
 				http.Error(w, fmt.Sprintf("cannot encode response data: %s", err), http.StatusInternalServerError)
 				return
 			}
+			cnf.logger.DebugContext(r.Context(), "JSON Response", slog.String("body", string(out)))
+
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			fmt.Fprintln(w, string(out))
 
 		default:
 			panic("should not reach here")
