@@ -14,7 +14,7 @@ lint:
 	linter ./...
 
 serve.ext:
-	@dc up -d directus
+	@docker compose up -d directus
 	@pnpm dev
 
 serve.target:
