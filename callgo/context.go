@@ -56,7 +56,7 @@ type RawTrigger struct {
 }
 
 func RawTriggerFromContext(ctx context.Context) *RawTrigger {
-	return ctx.Value("trigger").(*RawTrigger)
+	return ctx.Value(rawTriggerKey).(*RawTrigger)
 }
 
 type Trigger[Payload any] struct {
