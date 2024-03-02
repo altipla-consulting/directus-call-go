@@ -6,10 +6,10 @@ import (
 	"fmt"
 )
 
-type callgoKey int
+type callGoKey int
 
 const (
-	accountabilityKey callgoKey = iota
+	accountabilityKey callGoKey = iota
 	rawTriggerKey
 )
 
@@ -33,13 +33,17 @@ type TriggerKey struct {
 }
 
 func (n *TriggerKey) UnmarshalJSON(data []byte) error {
+	// String value, cannot be parsed easily as an integer because it can be an UUID.
 	if data[0] == '"' {
 		return json.Unmarshal(data, &n.Value)
 	}
+
+	// Numeric value that also gets replicated to a string for convenience.
 	if err := json.Unmarshal(data, &n.NumericValue); err != nil {
 		return err
 	}
 	n.Value = fmt.Sprintf("%d", n.NumericValue)
+
 	return nil
 }
 
@@ -47,12 +51,15 @@ func (n *TriggerKey) String() string {
 	return n.Value
 }
 
-type RawTrigger struct {
-	Event      string     `json:"event"`
-	Key        TriggerKey `json:"key"`
-	Collection string     `json:"collection"`
+func (n *TriggerKey) IsEmpty() bool {
+	return n.Value == ""
+}
 
-	Payload json.RawMessage `json:"payload"`
+type RawTrigger struct {
+	Event      string
+	Keys       []TriggerKey
+	Collection string
+	Payload    json.RawMessage
 }
 
 func RawTriggerFromContext(ctx context.Context) *RawTrigger {
@@ -60,10 +67,10 @@ func RawTriggerFromContext(ctx context.Context) *RawTrigger {
 }
 
 type Trigger[Payload any] struct {
-	Event      string     `json:"event"`
-	Key        TriggerKey `json:"key"`
-	Collection string     `json:"collection"`
-	Payload    Payload    `json:"payload"`
+	Event      string
+	Keys       []TriggerKey
+	Collection string
+	Payload    Payload
 }
 
 func TriggerFromContext[T any](ctx context.Context) (*Trigger[T], error) {
@@ -74,7 +81,7 @@ func TriggerFromContext[T any](ctx context.Context) (*Trigger[T], error) {
 	}
 	return &Trigger[T]{
 		Event:      raw.Event,
-		Key:        raw.Key,
+		Keys:       raw.Keys,
 		Collection: raw.Collection,
 		Payload:    payload,
 	}, nil

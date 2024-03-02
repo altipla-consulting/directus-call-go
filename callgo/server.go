@@ -91,7 +91,15 @@ type invokeRequest struct {
 	FnName         string          `json:"fnname"`
 	Accountability *Accountability `json:"accountability"`
 	Payload        json.RawMessage `json:"payload"`
-	Trigger        *RawTrigger     `json:"trigger"`
+	Trigger        *invokeTrigger  `json:"trigger"`
+}
+
+type invokeTrigger struct {
+	Event      string          `json:"event"`
+	Key        TriggerKey      `json:"key"`
+	Keys       []TriggerKey    `json:"keys"`
+	Collection string          `json:"collection"`
+	Payload    json.RawMessage `json:"payload"`
 }
 
 func invokeHandler(cnf serveOpts) http.HandlerFunc {
@@ -129,9 +137,19 @@ func invokeHandler(cnf serveOpts) http.HandlerFunc {
 			return
 		}
 
+		trigger := &RawTrigger{
+			Event:      ir.Trigger.Event,
+			Keys:       ir.Trigger.Keys,
+			Collection: ir.Trigger.Collection,
+			Payload:    ir.Trigger.Payload,
+		}
+		if !ir.Trigger.Key.IsEmpty() {
+			trigger.Keys = append(trigger.Keys, ir.Trigger.Key)
+		}
+
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, accountabilityKey, ir.Accountability)
-		ctx = context.WithValue(ctx, rawTriggerKey, ir.Trigger)
+		ctx = context.WithValue(ctx, rawTriggerKey, trigger)
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
