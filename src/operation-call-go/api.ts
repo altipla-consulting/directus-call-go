@@ -1,6 +1,6 @@
 
 import { defineOperationApi } from '@directus/extensions-sdk'
-import { findServer, listServers } from '../models/servers'
+import { findServer } from '../models/servers'
 
 type Options = {
   fnname: string
