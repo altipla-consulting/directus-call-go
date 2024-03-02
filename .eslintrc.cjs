@@ -1,4 +1,4 @@
 
 module.exports = {
-  extends: '@altipla/eslint-config-ts',
+  extends: '@altipla/eslint-config-vue-ts',
 }
