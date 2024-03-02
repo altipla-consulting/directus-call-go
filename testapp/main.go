@@ -19,7 +19,7 @@ func main() {
 	callgo.Handle(subpackage.AccountabilityFn)
 	callgo.Handle(localErrorFn)
 
-	callgo.Serve(callgo.WithDebugLogger())
+	callgo.Serve()
 }
 
 func localErrorFn(ctx context.Context) error {

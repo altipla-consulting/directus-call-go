@@ -44,7 +44,7 @@ func WithPort(port string) ServeOption {
 
 func WithDebugLogger() ServeOption {
 	return func(r *serveOpts) {
-		r.logger = slog.New(slog.NewJSONHandler(os.Stderr, nil))
+		r.logger = slog.New(slog.Default().Handler())
 	}
 }
 
@@ -57,7 +57,7 @@ func Serve(opts ...ServeOption) {
 	}
 
 	if cnf.logger == nil {
-		cnf.logger = slog.New(slog.NewTextHandler(io.Discard, nil))
+		cnf.logger = slog.New(slog.Default().Handler())
 	}
 
 	http.HandleFunc("/__callgo/invoke", invokeHandler(cnf))
