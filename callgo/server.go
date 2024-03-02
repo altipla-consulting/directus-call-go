@@ -42,6 +42,12 @@ func WithPort(port string) ServeOption {
 	}
 }
 
+func WithDebugLogger() ServeOption {
+	return func(r *serveOpts) {
+		r.logger = slog.New(slog.NewJSONHandler(os.Stderr, nil))
+	}
+}
+
 func Serve(opts ...ServeOption) {
 	cnf := serveOpts{
 		port: "8080",

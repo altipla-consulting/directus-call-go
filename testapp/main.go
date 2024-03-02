@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/altipla-consulting/directus-call-go/callgo"
 	"github.com/altipla-consulting/directus-call-go/testapp/subpackage"
@@ -20,7 +19,7 @@ func main() {
 	callgo.Handle(subpackage.AccountabilityFn)
 	callgo.Handle(localErrorFn)
 
-	callgo.Serve(callgo.WithLogger(slog.Default()))
+	callgo.Serve(callgo.WithDebugLogger())
 }
 
 func localErrorFn(ctx context.Context) error {
