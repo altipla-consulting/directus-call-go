@@ -1,7 +1,7 @@
 
 import { defineEndpoint } from '@directus/extensions-sdk'
 import { asyncHandler } from '@altipla/express-async-handler'
-import { listServers } from '../models/servers'
+import { findServer, listServers } from '../models/servers'
 
 export default defineEndpoint({
   id: 'call-go',
@@ -25,7 +25,8 @@ export default defineEndpoint({
         res.status(400).send(`server required`)
         return
       }
-      if (!listServers().includes(req.query.server)) {
+      let server = findServer(req.query.server)
+      if (!server) {
         res.status(400).send(`server ${req.query.server} not found`)
         return
       }
@@ -34,7 +35,7 @@ export default defineEndpoint({
       if (process.env.ALTIPLA_CALL_GO_TOKEN) {
         headers.Authorization = `Bearer ${process.env.ALTIPLA_CALL_GO_TOKEN}`
       }
-      let reply = await fetch(`${req.query.server}/__callgo/functions`, {
+      let reply = await fetch(`${server.url}/__callgo/functions`, {
         headers,
       })
       if (!reply.ok) {

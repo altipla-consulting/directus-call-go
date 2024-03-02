@@ -14,11 +14,12 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, ref, toRef, watch, type Ref } from 'vue'
+import { computed, inject, ref, watch, type Ref } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { installVueQuery } from '../global'
 import { useApi } from '@directus/extensions-sdk'
 import { firstBy } from 'thenby'
+import type { Server } from '../models/servers'
 
 installVueQuery()
 
@@ -32,39 +33,38 @@ let emit = defineEmits(['input', 'setFieldValue'])
 
 let values = inject<Ref<{ server: null | string }>>('values')
 
-let model = ref<string | null>()
-watch(toRef(props, 'value'), () => {
-  model.value = `${values!.value.server}||${props.value}`
-}, { immediate: true })
+let model = ref<string | null>(props.value ? `${values!.value.server}||${props.value}` : null)
 watch(model, () => {
   if (model.value) {
     let val = model.value.split('||')
-    emit('setFieldValue', { field: 'server', value: val[0] })
     emit('input', val[1])
+    emit('setFieldValue', { field: 'server', value: val[0] })
   } else {
-    emit('setFieldValue', { field: 'server', value: null })
     emit('input', null)
+    emit('setFieldValue', { field: 'server', value: null })
   }
 })
 
 let api = useApi()
 
-let servers = ref<string[]>([])
+let servers = ref<Server[]>([])
 
-const { data, isLoading, isError, error } = useQuery({
+let { data, isLoading, isError, error } = useQuery({
   queryKey: ['functions', servers.value.join(',')],
   enabled: computed<boolean>(() => !!servers.value.length),
   retry: 3,
   queryFn: () => {
     return Promise.all(servers.value.map(async server => {
       try {
-        let reply = await api.get(`/call-go/functions?server=${server}`)
-        return reply.data.map((fnname: string) => ({
-          text: fnname,
-          value: `${server}||${fnname}`,
-        }))
+        let reply = await api.get<string[]>(`/call-go/functions?server=${server.alias}`)
+        return reply.data.map((fnname: string) => {
+          return {
+            text: servers.value.length > 1 ? `${server.alias} / ${fnname}` : fnname,
+            value: `${server.alias}||${fnname}`,
+          }
+        })
       } catch (error) {
-        let err = new Error(`Cannot load functions from server ${server}`)
+        let err = new Error(`Cannot load functions from server ${server.alias}`)
         err.cause = error
         throw err
       }
@@ -81,7 +81,7 @@ let functions = computed(() => {
 })
 
 async function load() {
-  let reply = await api.get('/call-go/servers')
+  let reply = await api.get<Server[]>('/call-go/servers')
   servers.value = reply.data
 }
 void load()

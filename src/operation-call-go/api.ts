@@ -1,6 +1,6 @@
 
 import { defineOperationApi } from '@directus/extensions-sdk'
-import { listServers } from '../models/servers'
+import { findServer, listServers } from '../models/servers'
 
 type Options = {
   fnname: string
@@ -18,7 +18,8 @@ class CallError extends Error {
 export default defineOperationApi<Options>({
   id: 'call-go',
   async handler({ fnname, server, payload }, { env, logger, data, accountability }) {
-    if (!listServers().includes(server)) {
+    let serverdef = findServer(server)
+    if (!serverdef) {
       throw new Error(`The server ${server} is not available`)
     }
 
@@ -40,7 +41,7 @@ export default defineOperationApi<Options>({
 
     let reply
     try {
-      reply = await fetch(`${server}/__callgo/invoke`, {
+      reply = await fetch(`${serverdef.url}/__callgo/invoke`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
