@@ -48,7 +48,7 @@ export default defineOperationApi<Options>({
           fnname,
           accountability,
           trigger: data.$trigger,
-          payload,
+          payload: payload || {},
         }),
       })
     } catch (error) {
