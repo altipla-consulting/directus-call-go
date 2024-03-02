@@ -136,10 +136,9 @@ func invokeHandler(cnf serveOpts) http.HandlerFunc {
 			return
 		}
 
-		cnf.logger.InfoContext(r.Context(), "Function called", slog.String("fnname", ir.FnName))
-
 		f, ok := funcs[ir.FnName]
 		if !ok {
+			cnf.logger.WarnContext(r.Context(), "Function not found", slog.String("fnname", ir.FnName))
 			http.Error(w, fmt.Sprintf("function %q not found", ir.FnName), http.StatusNotFound)
 			return
 		}
@@ -153,6 +152,17 @@ func invokeHandler(cnf serveOpts) http.HandlerFunc {
 		if !ir.Trigger.Key.IsEmpty() {
 			trigger.Keys = append(trigger.Keys, ir.Trigger.Key)
 		}
+
+		keys := make([]string, len(trigger.Keys))
+		for i, k := range trigger.Keys {
+			keys[i] = k.String()
+		}
+		cnf.logger.InfoContext(r.Context(), "Function called",
+			slog.String("fnname", ir.FnName),
+			slog.String("event", ir.Trigger.Event),
+			slog.String("collection", ir.Trigger.Collection),
+			slog.Any("keys", keys),
+			slog.String("user", ir.Accountability.User))
 
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, accountabilityKey, ir.Accountability)
