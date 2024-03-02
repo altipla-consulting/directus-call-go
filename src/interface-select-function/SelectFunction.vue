@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, ref, watch, type Ref } from 'vue'
+import { computed, inject, ref, watch, type Ref, nextTick } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { installVueQuery } from '../global'
 import { useApi } from '@directus/extensions-sdk'
@@ -38,10 +38,10 @@ watch(model, () => {
   if (model.value) {
     let val = model.value.split('||')
     emit('input', val[1])
-    emit('setFieldValue', { field: 'server', value: val[0] })
+    void nextTick(() => emit('setFieldValue', { field: 'server', value: val[0] }))
   } else {
     emit('input', null)
-    emit('setFieldValue', { field: 'server', value: null })
+    void nextTick(() => emit('setFieldValue', { field: 'server', value: null }))
   }
 })
 
