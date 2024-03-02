@@ -48,6 +48,11 @@ func WithDebugLogger() ServeOption {
 	}
 }
 
+// PingFn is the default ping implementation.
+func PingFn(ctx context.Context) (string, error) {
+	return "pong", nil
+}
+
 func Serve(opts ...ServeOption) {
 	cnf := serveOpts{
 		port: "8080",
@@ -59,6 +64,8 @@ func Serve(opts ...ServeOption) {
 	if cnf.logger == nil {
 		cnf.logger = slog.New(slog.Default().Handler())
 	}
+
+	Handle(PingFn)
 
 	http.HandleFunc("/__callgo/invoke", invokeHandler(cnf))
 	http.HandleFunc("/__callgo/functions", functionsHandler(cnf))
