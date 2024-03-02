@@ -42,12 +42,6 @@ func WithPort(port string) ServeOption {
 	}
 }
 
-func WithDebugLogger() ServeOption {
-	return func(r *serveOpts) {
-		r.logger = slog.New(slog.Default().Handler())
-	}
-}
-
 // PingFn is the default ping implementation.
 func PingFn(ctx context.Context) (string, error) {
 	return "pong", nil
