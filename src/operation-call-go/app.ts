@@ -6,15 +6,15 @@ export default defineOperationApp({
   name: 'Go Function Call',
   icon: 'function',
   description: 'Call a Go function running inside an internal app.',
-  overview({ fnname }) {
+  overview({ fnname, server }) {
     return [
       {
         label: 'Function Name',
-        text: fnname ? fnname.split('||')[1] : '',
+        text: fnname,
       },
       {
         label: 'Server',
-        text: fnname ? fnname.split('||')[0] : '',
+        text: server,
       },
     ]
   },
@@ -26,6 +26,14 @@ export default defineOperationApp({
       meta: {
         width: 'full',
         interface: 'call-go-select-function',
+      },
+    },
+    {
+      field: 'server',
+      name: 'Server',
+      type: 'string',
+      meta: {
+        hidden: true,
       },
     },
     {

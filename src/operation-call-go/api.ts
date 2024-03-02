@@ -4,6 +4,7 @@ import { listServers } from '../models/servers'
 
 type Options = {
   fnname: string
+  server: string
   payload: string
 }
 
@@ -16,16 +17,12 @@ class CallError extends Error {
 
 export default defineOperationApi<Options>({
   id: 'call-go',
-  async handler({ fnname, payload }, { env, logger, data, accountability }) {
-    let parts = fnname.split('||')
-    if (parts.length !== 2) {
-      throw new Error('The function name should be in the format "server||function"')
-    }
-    if (!listServers().includes(parts[0])) {
-      throw new Error(`The server ${parts[0]} is not available`)
+  async handler({ fnname, server, payload }, { env, logger, data, accountability }) {
+    if (!listServers().includes(server)) {
+      throw new Error(`The server ${server} is not available`)
     }
 
-    logger = logger.child({ fnname: parts[1], server: parts[0] })
+    logger = logger.child({ fnname, server: server })
 
     let headers: Record<string, string> = {
       'Content-Type': 'application/json; charset=utf-8',
@@ -43,11 +40,11 @@ export default defineOperationApi<Options>({
 
     let reply
     try {
-      reply = await fetch(`${parts[0]}/__callgo/invoke`, {
+      reply = await fetch(`${server}/__callgo/invoke`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          fnname: parts[1],
+          fnname,
           accountability,
           trigger: data.$trigger,
           payload,
