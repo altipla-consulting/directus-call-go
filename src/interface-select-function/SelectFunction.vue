@@ -2,7 +2,7 @@
 <template>
   <VSelect
     v-model="model"
-    :items="functions"
+    :items="functions ?? []"
     placeholder="Function Name"
     search
     :disabled="isLoading || isError"
@@ -47,19 +47,25 @@ watch(model, () => {
 
 let api = useApi()
 
-let servers = ref<Server[]>([])
+let { data: servers, isLoading: isLoadingServers, isError: isErrorServers, error: errorServers } = useQuery({
+  queryKey: ['servers'],
+  queryFn: async () => {
+    let reply = await api.get<Server[]>('/call-go/servers')
+    return reply.data
+  },
+})
 
-let { data, isLoading, isError, error } = useQuery({
-  queryKey: ['functions', servers.value.join(',')],
-  enabled: computed<boolean>(() => !!servers.value.length),
+let { data: functions, isLoading: isLoadingFunctions, isError: isErrorFunctions, error: errorFunctions } = useQuery({
+  queryKey: ['functions', servers.value?.join(',')],
+  enabled: computed<boolean>(() => !!servers.value?.length),
   retry: 3,
-  queryFn: () => {
-    return Promise.all(servers.value.map(async server => {
+  queryFn: async () => {
+    let data = await Promise.all(servers.value!.map(async server => {
       try {
         let reply = await api.get<string[]>(`/call-go/functions?server=${server.alias}`)
         return reply.data.map((fnname: string) => {
           return {
-            text: servers.value.length > 1 ? `${server.alias} / ${fnname}` : fnname,
+            text: servers.value!.length > 1 ? `${server.alias} / ${fnname}` : fnname,
             value: `${server.alias}||${fnname}`,
           }
         })
@@ -69,22 +75,16 @@ let { data, isLoading, isError, error } = useQuery({
         throw err
       }
     }))
-  },
-})
-let functions = computed(() => {
-  if (data.value) {
-    let all = data.value.flat()
+
+    let all = data.flat()
     all.sort(firstBy('text'))
     return all
-  }
-  return []
+  },
 })
 
-async function load() {
-  let reply = await api.get<Server[]>('/call-go/servers')
-  servers.value = reply.data
-}
-void load()
+let isLoading = computed(() => isLoadingServers.value || isLoadingFunctions.value)
+let isError = computed(() => isErrorServers.value || isErrorFunctions.value)
+let error = computed(() => errorServers.value || errorFunctions.value)
 </script>
 
 <style type="text-css">
