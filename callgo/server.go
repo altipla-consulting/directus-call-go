@@ -116,11 +116,9 @@ func invokeHandler(cnf serveOpts) http.HandlerFunc {
 			return
 		}
 
-		if cnf.securityToken != "" {
-			if r.Header.Get("Authorization") != "Bearer "+cnf.securityToken {
-				http.Error(w, "wrong authorization token", http.StatusUnauthorized)
-				return
-			}
+		if cnf.securityToken != "" && r.Header.Get("Authorization") != "Bearer "+cnf.securityToken {
+			http.Error(w, "wrong authorization token", http.StatusUnauthorized)
+			return
 		}
 
 		in, err := io.ReadAll(r.Body)
