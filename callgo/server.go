@@ -14,12 +14,17 @@ import (
 	"sort"
 	"syscall"
 	"time"
+
+	"github.com/altipla-consulting/telemetry"
+	"github.com/altipla-consulting/telemetry/logging"
+	"github.com/altipla-consulting/telemetry/sentry"
 )
 
 type serveOpts struct {
 	securityToken string
 	logger        *slog.Logger
 	port          string
+	telemetryOpts []telemetry.Option
 }
 
 type ServeOption func(r *serveOpts)
@@ -42,6 +47,12 @@ func WithPort(port string) ServeOption {
 	}
 }
 
+func WithSentry() ServeOption {
+	return func(r *serveOpts) {
+		r.telemetryOpts = append(r.telemetryOpts, sentry.Reporter(), logging.Standard())
+	}
+}
+
 // PingFn is the default ping implementation.
 func PingFn(ctx context.Context) (string, error) {
 	return "pong", nil
@@ -58,6 +69,9 @@ func Serve(opts ...ServeOption) {
 	if cnf.logger == nil {
 		cnf.logger = slog.New(slog.Default().Handler())
 	}
+
+	telemetry.Configure(cnf.telemetryOpts...)
+	defer telemetry.ReportPanics(context.Background())
 
 	Handle(PingFn)
 
