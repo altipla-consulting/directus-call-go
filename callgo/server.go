@@ -3,42 +3,31 @@ package callgo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
-	"os/signal"
 	"reflect"
 	"sort"
-	"syscall"
 	"time"
 )
 
-type serveOpts struct {
+type serverOpts struct {
 	securityToken string
 	logger        *slog.Logger
-	port          string
 }
 
-type ServeOption func(r *serveOpts)
+type ServerOption func(r *serverOpts)
 
-func WithSecurityToken(token string) ServeOption {
-	return func(r *serveOpts) {
+func WithSecurityToken(token string) ServerOption {
+	return func(r *serverOpts) {
 		r.securityToken = token
 	}
 }
 
-func WithLogger(logger *slog.Logger) ServeOption {
-	return func(r *serveOpts) {
+func WithLogger(logger *slog.Logger) ServerOption {
+	return func(r *serverOpts) {
 		r.logger = logger
-	}
-}
-
-func WithPort(port string) ServeOption {
-	return func(r *serveOpts) {
-		r.port = port
 	}
 }
 
@@ -47,10 +36,8 @@ func PingFn(ctx context.Context) (string, error) {
 	return "pong", nil
 }
 
-func Serve(opts ...ServeOption) {
-	cnf := serveOpts{
-		port: "8080",
-	}
+func NewServer(opts ...ServerOption) (string, http.Handler) {
+	cnf := serverOpts{}
 	for _, opt := range opts {
 		opt(&cnf)
 	}
@@ -61,37 +48,11 @@ func Serve(opts ...ServeOption) {
 
 	Handle(PingFn)
 
-	http.HandleFunc("/__callgo/invoke", invokeHandler(cnf))
-	http.HandleFunc("/__callgo/functions", functionsHandler(cnf))
+	mux := http.NewServeMux()
+	mux.HandleFunc("/__callgo/invoke", invokeHandler(cnf))
+	mux.HandleFunc("/__callgo/functions", functionsHandler(cnf))
 
-	w := slog.New(cnf.logger.Handler())
-	w = w.With("stdlib", "net/http")
-	server := &http.Server{
-		Addr:     ":" + cnf.port,
-		ErrorLog: slog.NewLogLogger(w.Handler(), slog.LevelError),
-	}
-
-	go func() {
-		cnf.logger.Info("Instance initialized successfully!", slog.String("port", cnf.port))
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			cnf.logger.Error("could not listen and serve", slog.String("error", err.Error()))
-			os.Exit(1)
-		}
-	}()
-
-	signalctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer done()
-	<-signalctx.Done()
-
-	cnf.logger.Debug("Signal received, shutting down server")
-	shutdownctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := server.Shutdown(shutdownctx); err != nil {
-		cnf.logger.Error("could not shutdown server", slog.String("error", err.Error()))
-		os.Exit(1)
-	}
-
-	cnf.logger.Info("Server shutdown successfully!")
+	return "/__callgo/", mux
 }
 
 type invokeRequest struct {
@@ -109,7 +70,7 @@ type invokeTrigger struct {
 	Payload    json.RawMessage `json:"payload"`
 }
 
-func invokeHandler(cnf serveOpts) http.HandlerFunc {
+func invokeHandler(cnf serverOpts) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -220,7 +181,7 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
-func emitUserError(cnf serveOpts, r *http.Request, w http.ResponseWriter, ir invokeRequest, err error) {
+func emitUserError(cnf serverOpts, r *http.Request, w http.ResponseWriter, ir invokeRequest, err error) {
 	cnf.logger.ErrorContext(r.Context(), "callgo: function call error",
 		slog.String("error", err.Error()),
 		slog.String("fnname", ir.FnName))
@@ -232,7 +193,7 @@ func emitUserError(cnf serveOpts, r *http.Request, w http.ResponseWriter, ir inv
 	}
 }
 
-func functionsHandler(cnf serveOpts) http.HandlerFunc {
+func functionsHandler(cnf serverOpts) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
