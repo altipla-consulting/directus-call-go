@@ -12,11 +12,6 @@ import (
 	"time"
 )
 
-type serverOpts struct {
-	securityToken string
-	logger        *slog.Logger
-}
-
 type ServerOption func(r *serverOpts)
 
 func WithSecurityToken(token string) ServerOption {
@@ -31,9 +26,26 @@ func WithLogger(logger *slog.Logger) ServerOption {
 	}
 }
 
+type ErrorReporter interface {
+	ReportError(ctx context.Context, err error)
+	ReportPanics(ctx context.Context)
+}
+
+func WithErrorReporter(reporter ErrorReporter) ServerOption {
+	return func(r *serverOpts) {
+		r.reporter = reporter
+	}
+}
+
 // PingFn is the default ping implementation.
 func PingFn(ctx context.Context) (string, error) {
 	return "pong", nil
+}
+
+type serverOpts struct {
+	securityToken string
+	logger        *slog.Logger
+	reporter      ErrorReporter
 }
 
 func NewServer(opts ...ServerOption) (string, http.Handler) {
@@ -72,6 +84,10 @@ type invokeTrigger struct {
 
 func invokeHandler(cnf serverOpts) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if cnf.reporter != nil {
+			defer cnf.reporter.ReportPanics(r.Context())
+		}
+
 		if r.Method != http.MethodPost {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 			return
@@ -181,13 +197,17 @@ type errorResponse struct {
 	Error string `json:"error"`
 }
 
-func emitUserError(cnf serverOpts, r *http.Request, w http.ResponseWriter, ir invokeRequest, err error) {
+func emitUserError(cnf serverOpts, r *http.Request, w http.ResponseWriter, ir invokeRequest, userError error) {
 	cnf.logger.ErrorContext(r.Context(), "callgo: function call error",
-		slog.String("error", err.Error()),
+		slog.String("error", userError.Error()),
 		slog.String("fnname", ir.FnName))
 
+	if cnf.reporter != nil {
+		cnf.reporter.ReportError(r.Context(), userError)
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := json.NewEncoder(w).Encode(errorResponse{Error: fmt.Sprint(err)}); err != nil {
+	if err := json.NewEncoder(w).Encode(errorResponse{Error: fmt.Sprint(userError)}); err != nil {
 		http.Error(w, fmt.Sprintf("cannot encode error response: %s", err), http.StatusInternalServerError)
 		return
 	}
