@@ -3,16 +3,12 @@ package callgo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
-	"os"
-	"os/signal"
 	"reflect"
 	"sort"
-	"syscall"
 	"time"
 )
 
@@ -47,51 +43,17 @@ func PingFn(ctx context.Context) (string, error) {
 	return "pong", nil
 }
 
-func Serve(opts ...ServeOption) {
-	cnf := serveOpts{
-		port: "8080",
-	}
-	for _, opt := range opts {
-		opt(&cnf)
-	}
+func RegisterMux() (string, http.Handler) {
+	cnf := serveOpts{}
 
-	if cnf.logger == nil {
-		cnf.logger = slog.New(slog.Default().Handler())
-	}
+	mux := http.NewServeMux()
 
 	Handle(PingFn)
 
-	http.HandleFunc("/__callgo/invoke", invokeHandler(cnf))
-	http.HandleFunc("/__callgo/functions", functionsHandler(cnf))
+	mux.HandleFunc("/__callgo/invoke", invokeHandler(cnf))
+	mux.HandleFunc("/__callgo/functions", functionsHandler(cnf))
 
-	w := slog.New(cnf.logger.Handler())
-	w = w.With("stdlib", "net/http")
-	server := &http.Server{
-		Addr:     ":" + cnf.port,
-		ErrorLog: slog.NewLogLogger(w.Handler(), slog.LevelError),
-	}
-
-	go func() {
-		cnf.logger.Info("Instance initialized successfully!", slog.String("port", cnf.port))
-		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			cnf.logger.Error("could not listen and serve", slog.String("error", err.Error()))
-			os.Exit(1)
-		}
-	}()
-
-	signalctx, done := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer done()
-	<-signalctx.Done()
-
-	cnf.logger.Debug("Signal received, shutting down server")
-	shutdownctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	if err := server.Shutdown(shutdownctx); err != nil {
-		cnf.logger.Error("could not shutdown server", slog.String("error", err.Error()))
-		os.Exit(1)
-	}
-
-	cnf.logger.Info("Server shutdown successfully!")
+	return "/__callgo", mux
 }
 
 type invokeRequest struct {
