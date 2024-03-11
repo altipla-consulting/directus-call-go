@@ -1,6 +1,7 @@
 
 import { defineOperationApi } from '@directus/extensions-sdk'
 import { findServer } from '../models/servers'
+import { createError } from '@directus/errors'
 
 type Options = {
   fnname: string
@@ -8,12 +9,7 @@ type Options = {
   payload: string
 }
 
-class CallError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'CallError'
-  }
-}
+let CallError = createError<{ error: string }>('INTERNAL_SERVER_ERROR', ({ error }) => `CallGo failed: ${error}`, 500)
 
 export default defineOperationApi<Options>({
   id: 'call-go',
@@ -35,7 +31,7 @@ export default defineOperationApi<Options>({
     }
     
     logger.info({
-      msg: 'Call Go function',
+      msg: 'CallGo function',
       withAuthorization,
     })
 
@@ -53,7 +49,7 @@ export default defineOperationApi<Options>({
       })
     } catch (error) {
       logger.error({
-        msg: 'The Go function call failed',
+        msg: 'CallGo unvoke failed',
         error,
       })
       throw error
@@ -62,22 +58,26 @@ export default defineOperationApi<Options>({
       let error = (await reply.text()).trim()
 
       logger.error({
-        msg: 'The Go function call status failed',
+        msg: 'CallGo status failed',
         status: reply.status,
         error,
       })
-      let terr = new Error(`The Go function call failed with status ${reply.status}`)
+      let terr = new Error(`CallGo failed with status ${reply.status}`)
       terr.cause = error
       throw terr
     }
     let result = await reply.json()
     if (result.error) {
       logger.error({
-        msg: 'The Go function call returned an error',
+        msg: 'CallGo internal server error',
         error: result.error,
       })
-      throw new CallError(result.error)
+      throw new CallError(result)
     }
-    return result
+    if (result.callGoError) {
+      let custom = createError(result.callGoError.code, result.callGoError.message, result.callGoError.status)
+      throw new custom(result.callGoError.extensions)
+    }
+    return result.payload
   },
 })

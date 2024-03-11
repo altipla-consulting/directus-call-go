@@ -3,6 +3,7 @@ package callgo
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -80,6 +81,12 @@ type invokeTrigger struct {
 	Keys       []TriggerKey    `json:"keys"`
 	Collection string          `json:"collection"`
 	Payload    json.RawMessage `json:"payload"`
+}
+
+type invokeReply struct {
+	Payload     any          `json:"payload,omitempty"`
+	Error       string       `json:"error,omitempty"`
+	CallGoError *callGoError `json:"callGoError,omitempty"`
 }
 
 func invokeHandler(cnf serverOpts) http.HandlerFunc {
@@ -168,42 +175,55 @@ func invokeHandler(cnf serverOpts) http.HandlerFunc {
 		}
 
 		out := f.fv.Call(args)
+		var reply invokeReply
 		switch len(out) {
 		case 1:
 			if err := out[0].Interface(); err != nil {
 				emitUserError(cnf, r, w, ir, err.(error))
 				return
 			}
-			fmt.Fprintln(w, "{}")
 
 		case 2:
 			if err := out[1].Interface(); err != nil {
 				emitUserError(cnf, r, w, ir, err.(error))
 				return
 			}
-
-			out, err := json.Marshal(out[0].Interface())
-			if err != nil {
-				http.Error(w, fmt.Sprintf("cannot encode response data: %s", err), http.StatusInternalServerError)
-				return
-			}
-			cnf.logger.DebugContext(r.Context(), "JSON Response", slog.String("body", string(out)))
-
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			fmt.Fprintln(w, string(out))
+			reply.Payload = out[0].Interface()
 
 		default:
 			panic("should not reach here")
 		}
+
+		resp, err := json.Marshal(reply)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("cannot encode response data: %s", err), http.StatusInternalServerError)
+			return
+		}
+		cnf.logger.DebugContext(r.Context(), "JSON Response", slog.String("body", string(resp)))
+
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		fmt.Fprintln(w, string(resp))
 	}
 }
 
-type errorResponse struct {
-	Error string `json:"error"`
-}
-
 func emitUserError(cnf serverOpts, r *http.Request, w http.ResponseWriter, ir invokeRequest, userError error) {
-	cnf.logger.ErrorContext(r.Context(), "callgo: function call error",
+	var known *callGoError
+	if errors.As(userError, &known) {
+		cnf.logger.ErrorContext(r.Context(), "callgo: function returned error",
+			slog.String("code", known.Code),
+			slog.String("message", known.Message),
+			slog.Any("extensions", known.Extensions),
+			slog.String("fnname", ir.FnName))
+
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		if err := json.NewEncoder(w).Encode(invokeReply{CallGoError: known}); err != nil {
+			http.Error(w, fmt.Sprintf("cannot encode error response: %s", err), http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+
+	cnf.logger.ErrorContext(r.Context(), "callgo: function unexpected error",
 		slog.String("error", userError.Error()),
 		slog.String("fnname", ir.FnName))
 
@@ -212,7 +232,7 @@ func emitUserError(cnf serverOpts, r *http.Request, w http.ResponseWriter, ir in
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	if err := json.NewEncoder(w).Encode(errorResponse{Error: fmt.Sprint(userError)}); err != nil {
+	if err := json.NewEncoder(w).Encode(invokeReply{Error: fmt.Sprint(userError)}); err != nil {
 		http.Error(w, fmt.Sprintf("cannot encode error response: %s", err), http.StatusInternalServerError)
 		return
 	}

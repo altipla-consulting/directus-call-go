@@ -20,10 +20,12 @@ func main() {
 	callgo.Handle(subpackage.ParamWithReturnFn)
 	callgo.Handle(subpackage.AccountabilityFn)
 	callgo.Handle(localErrorFn)
+	callgo.Handle(subpackage.FailedValidationErrorFn)
+	callgo.Handle(subpackage.InvalidErrorFn)
 
 	http.Handle(callgo.NewServer())
 	slog.Info("Listening on http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+	_ = http.ListenAndServe(":8080", nil)
 }
 
 func localErrorFn(ctx context.Context) error {

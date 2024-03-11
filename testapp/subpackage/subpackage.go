@@ -26,3 +26,11 @@ func AccountabilityFn(ctx context.Context) error {
 	fmt.Printf("%#v\n", callgo.AccountabilityFromContext(ctx))
 	return nil
 }
+
+func FailedValidationErrorFn(ctx context.Context) error {
+	return callgo.NewFailedValidationError("foo", "foo", "This field is not accepted")
+}
+
+func InvalidErrorFn(ctx context.Context) error {
+	return callgo.NewInvalidError("This is an invalid error")
+}
