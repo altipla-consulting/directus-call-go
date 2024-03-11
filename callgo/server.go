@@ -132,12 +132,17 @@ func invokeHandler(cnf serverOpts) http.HandlerFunc {
 		for i, k := range trigger.Keys {
 			keys[i] = k.String()
 		}
-		cnf.logger.InfoContext(r.Context(), "Function called",
-			slog.String("fnname", ir.FnName),
-			slog.String("event", ir.Trigger.Event),
-			slog.String("collection", ir.Trigger.Collection),
-			slog.Any("keys", keys),
-			slog.String("user", ir.Accountability.User))
+
+		if ir.Accountability == nil {
+			cnf.logger.InfoContext(r.Context(), "Function called", slog.String("fnname", ir.FnName))
+		} else {
+			cnf.logger.InfoContext(r.Context(), "Function called",
+				slog.String("fnname", ir.FnName),
+				slog.String("event", ir.Trigger.Event),
+				slog.String("collection", ir.Trigger.Collection),
+				slog.Any("keys", keys),
+				slog.String("user", ir.Accountability.User))
+		}
 
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, accountabilityKey, ir.Accountability)
