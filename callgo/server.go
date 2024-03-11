@@ -71,7 +71,7 @@ type invokeRequest struct {
 	FnName         string          `json:"fnname"`
 	Accountability *Accountability `json:"accountability"`
 	Payload        json.RawMessage `json:"payload"`
-	Trigger        *invokeTrigger  `json:"trigger"`
+	Trigger        invokeTrigger   `json:"trigger"`
 }
 
 type invokeTrigger struct {
