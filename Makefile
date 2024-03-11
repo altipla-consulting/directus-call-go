@@ -2,7 +2,13 @@
 FILES = $(shell find . -type f -name '*.go' -not -path './vendor/*')
 
 build:
-	@pnpm install
+	rm -rf tmp/extensions tmp/uploads
+	pnpm install
+	go get github.com/mattn/goreman@latest
+	mkdir -p dist
+	mkdir -p tmp/extensions/directus-extension-call-go
+	ln -s $(PWD)/dist $(PWD)/tmp/extensions/directus-extension-call-go/dist
+	ln -s $(PWD)/package.json $(PWD)/tmp/extensions/directus-extension-call-go/package.json
 
 data:
 	@pnpm data
@@ -13,12 +19,8 @@ lint:
 	go vet ./...
 	linter ./...
 
-serve.ext:
-	@docker compose up -d directus
-	@pnpm dev
-
-serve.target:
-	@reloader run -r ./testapp -w ./callgo
+serve:
+	@goreman -set-ports=false start
 
 gofmt:
 	@gofmt -s -w $(FILES)

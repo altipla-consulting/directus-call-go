@@ -62,7 +62,8 @@
 		"link": "directus-extension link",
 		"lint": "vue-tsc --noEmit && eslint --ext .ts,.tsx,.vue src",
 		"fix": "eslint --fix --ext .ts,.tsx,.vue src",
-		"data": "reset-db-mysql"
+		"data": "reset-db-mysql",
+		"directus": "directus start"
 	},
 	"files": [
 		"src",
@@ -72,6 +73,7 @@
 		"@altipla/eslint-config-vue-ts": "^0.11.0",
 		"@directus/extensions-sdk": "10.3.3",
 		"@types/node": "^20.11.24",
+		"directus": "10.9.3",
 		"reset-db-mysql": "^0.1.0",
 		"rollup": "^4.12.0",
 		"typescript": "^5.3.3",
