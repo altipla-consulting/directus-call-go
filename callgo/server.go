@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+const levelTrace = slog.Level(-8)
+
 type ServerOption func(r *serverOpts)
 
 func WithSecurityToken(token string) ServerOption {
@@ -110,7 +112,7 @@ func invokeHandler(cnf serverOpts) http.HandlerFunc {
 			http.Error(w, fmt.Sprintf("cannot read request body: %s", err), http.StatusInternalServerError)
 			return
 		}
-		cnf.logger.DebugContext(r.Context(), "JSON Request", slog.String("body", string(in)))
+		cnf.logger.Log(r.Context(), levelTrace, "CallGo JSON Request", slog.String("body", string(in)))
 
 		var ir invokeRequest
 		if err := json.Unmarshal(in, &ir); err != nil {
@@ -141,9 +143,9 @@ func invokeHandler(cnf serverOpts) http.HandlerFunc {
 		}
 
 		if ir.Accountability == nil {
-			cnf.logger.InfoContext(r.Context(), "Function called", slog.String("fnname", ir.FnName))
+			cnf.logger.InfoContext(r.Context(), "Function call", slog.String("fnname", ir.FnName))
 		} else {
-			cnf.logger.InfoContext(r.Context(), "Function called",
+			cnf.logger.InfoContext(r.Context(), "Function call",
 				slog.String("fnname", ir.FnName),
 				slog.String("event", ir.Trigger.Event),
 				slog.String("collection", ir.Trigger.Collection),
@@ -199,7 +201,7 @@ func invokeHandler(cnf serverOpts) http.HandlerFunc {
 			http.Error(w, fmt.Sprintf("cannot encode response data: %s", err), http.StatusInternalServerError)
 			return
 		}
-		cnf.logger.DebugContext(r.Context(), "JSON Response", slog.String("body", string(resp)))
+		cnf.logger.DebugContext(r.Context(), "CallGo JSON Response", slog.String("body", string(resp)))
 
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		fmt.Fprintln(w, string(resp))
