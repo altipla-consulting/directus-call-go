@@ -83,6 +83,15 @@ type invokeTrigger struct {
 	Keys       []TriggerKey    `json:"keys"`
 	Collection string          `json:"collection"`
 	Payload    json.RawMessage `json:"payload"`
+
+	// Manual invokations.
+	Path string     `json:"path"`
+	Body invokeBody `json:"body"`
+}
+
+type invokeBody struct {
+	Collection string       `json:"collection"`
+	Keys       []TriggerKey `json:"keys"`
 }
 
 type invokeReply struct {
@@ -132,9 +141,19 @@ func invokeHandler(cnf serverOpts) http.HandlerFunc {
 			Keys:       ir.Trigger.Keys,
 			Collection: ir.Trigger.Collection,
 			Payload:    ir.Trigger.Payload,
+			Path:       ir.Trigger.Path,
 		}
+
+		// Clone the single key as part of the list to look only for the list when implementing flows.
+		// With this we can access the key both ways in the flow code.
 		if !ir.Trigger.Key.IsEmpty() {
 			trigger.Keys = append(trigger.Keys, ir.Trigger.Key)
+		}
+
+		// Manual invokation. We copy everything from its body
+		if ir.Trigger.Body.Collection != "" {
+			trigger.Collection = ir.Trigger.Body.Collection
+			trigger.Keys = ir.Trigger.Body.Keys
 		}
 
 		keys := make([]string, len(trigger.Keys))

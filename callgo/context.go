@@ -28,8 +28,8 @@ func AccountabilityFromContext(ctx context.Context) *Accountability {
 }
 
 type TriggerKey struct {
-	Value        string `json:"string"`
-	NumericValue int64  `json:"number"`
+	Value        string
+	NumericValue int64
 }
 
 func (n *TriggerKey) UnmarshalJSON(data []byte) error {
@@ -60,6 +60,9 @@ type RawTrigger struct {
 	Keys       []TriggerKey
 	Collection string
 	Payload    json.RawMessage
+
+	// Path is the URL path of a manual invokation.
+	Path string
 }
 
 func RawTriggerFromContext(ctx context.Context) *RawTrigger {
@@ -71,6 +74,9 @@ type Trigger[Payload any] struct {
 	Keys       []TriggerKey
 	Collection string
 	Payload    Payload
+
+	// Path is the URL path of a manual invokation.
+	Path string
 }
 
 func TriggerFromContext[T any](ctx context.Context) (*Trigger[T], error) {
