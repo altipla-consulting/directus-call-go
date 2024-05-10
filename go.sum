@@ -1,0 +1,4 @@
+github.com/altipla-consulting/env v0.2.2 h1:EbBAe5tMYNaOVhiVzRxNL39u7hKaerSBhF+lwltE6ok=
+github.com/altipla-consulting/env v0.2.2/go.mod h1:0wGCiA8OUISdQbBVS5bBeJAteFThsVuQAgDIZUYDFiA=
+github.com/altipla-consulting/errors v1.4.1 h1:7ZNNb3nSHK3cSYeBVtmiuQM3m17EQ+ldKbRe3ADIcBM=
+github.com/altipla-consulting/errors v1.4.1/go.mod h1:x2/+JzMSga6sEUe8FNKIwWRshteAnNJo2WY81m3US6o=
