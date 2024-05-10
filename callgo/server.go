@@ -246,19 +246,16 @@ func emitUserError(cnf serverOpts, r *http.Request, w http.ResponseWriter, ir in
 		return
 	}
 
-	var trace string
-	if env.IsLocal() {
-		trace = errors.Stack(userError)
-	} else {
-		trace = errors.Details(userError)
-	}
 	cnf.logger.ErrorContext(r.Context(), "callgo: function unexpected error",
 		slog.String("error", userError.Error()),
 		slog.String("fnname", ir.FnName),
-		slog.String("trace", trace))
+		slog.String("trace", errors.Details(userError)))
 
 	if cnf.reporter != nil {
 		cnf.reporter.ReportError(r.Context(), userError)
+	}
+	if env.IsLocal() {
+		fmt.Println("local trace:", errors.Stack(userError))
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
