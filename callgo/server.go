@@ -3,7 +3,6 @@ package callgo
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -11,6 +10,9 @@ import (
 	"reflect"
 	"sort"
 	"time"
+
+	"github.com/altipla-consulting/env"
+	"github.com/altipla-consulting/errors"
 )
 
 const levelTrace = slog.Level(-8)
@@ -246,10 +248,14 @@ func emitUserError(cnf serverOpts, r *http.Request, w http.ResponseWriter, ir in
 
 	cnf.logger.ErrorContext(r.Context(), "callgo: function unexpected error",
 		slog.String("error", userError.Error()),
-		slog.String("fnname", ir.FnName))
+		slog.String("fnname", ir.FnName),
+		slog.String("details", errors.Details(userError)))
 
 	if cnf.reporter != nil {
 		cnf.reporter.ReportError(r.Context(), userError)
+	}
+	if env.IsLocal() {
+		fmt.Println(errors.Stack(userError))
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
