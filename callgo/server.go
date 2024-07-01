@@ -13,7 +13,6 @@ import (
 
 	"github.com/altipla-consulting/env"
 	"github.com/altipla-consulting/errors"
-	"github.com/perimeterx/marshmallow"
 )
 
 const levelTrace = slog.Level(-8)
