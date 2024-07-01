@@ -63,6 +63,8 @@ type RawTrigger struct {
 
 	// Path is the URL path of a manual invokation.
 	Path string
+
+	bodyContent []byte
 }
 
 func RawTriggerFromContext(ctx context.Context) *RawTrigger {
@@ -91,4 +93,13 @@ func TriggerFromContext[T any](ctx context.Context) (*Trigger[T], error) {
 		Collection: raw.Collection,
 		Payload:    payload,
 	}, nil
+}
+
+func FieldsFromContext[T any](ctx context.Context) (*T, error) {
+	var result T
+	raw := RawTriggerFromContext(ctx)
+	if err := json.Unmarshal(raw.bodyContent, &result); err != nil {
+		return nil, fmt.Errorf("callgo: cannot decode trigger fields: %w", err)
+	}
+	return &result, nil
 }

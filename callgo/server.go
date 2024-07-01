@@ -13,6 +13,7 @@ import (
 
 	"github.com/altipla-consulting/env"
 	"github.com/altipla-consulting/errors"
+	"github.com/perimeterx/marshmallow"
 )
 
 const levelTrace = slog.Level(-8)
@@ -94,6 +95,12 @@ type invokeTrigger struct {
 type invokeBody struct {
 	Collection string       `json:"collection"`
 	Keys       []TriggerKey `json:"keys"`
+	Content    []byte       `json:"-"`
+}
+
+func (body *invokeBody) UnmarshalJSON(data []byte) error {
+	body.Content = data
+	return json.Unmarshal(data, body)
 }
 
 type invokeReply struct {
@@ -156,6 +163,7 @@ func invokeHandler(cnf serverOpts) http.HandlerFunc {
 		if ir.Trigger.Body.Collection != "" {
 			trigger.Collection = ir.Trigger.Body.Collection
 			trigger.Keys = ir.Trigger.Body.Keys
+			trigger.bodyContent = ir.Trigger.Body.Content
 		}
 
 		keys := make([]string, len(trigger.Keys))
