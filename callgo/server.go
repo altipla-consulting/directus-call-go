@@ -99,7 +99,8 @@ type invokeBody struct {
 
 func (body *invokeBody) UnmarshalJSON(data []byte) error {
 	body.Content = data
-	return json.Unmarshal(data, body)
+	type alias invokeBody
+	return json.Unmarshal(data, (*alias)(body))
 }
 
 type invokeReply struct {
