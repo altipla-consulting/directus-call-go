@@ -4,7 +4,6 @@ FILES = $(shell find . -type f -name '*.go' -not -path './vendor/*')
 build:
 	rm -rf tmp/extensions tmp/uploads
 	pnpm install
-	go get github.com/mattn/goreman@latest
 	mkdir -p dist
 	mkdir -p tmp/extensions/directus-extension-call-go
 	ln -s $(PWD)/dist $(PWD)/tmp/extensions/directus-extension-call-go/dist
